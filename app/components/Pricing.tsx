@@ -9,8 +9,7 @@ const plans = [
     priceDisplay: '$50/item',
     subPrice: '($100 min)',
     items: 3,
-    freeBoxes: 0,
-    note: 'Boxes only. No bulky items or furniture.',
+    blurb: 'Best for students storing just a few things — a box or two, a fridge, a bag. Pay only for what you need.',
     badge: null as string | null,
     popular: false,
     showSmallPrint: false,
@@ -23,8 +22,7 @@ const plans = [
     priceDisplay: '$175',
     subPrice: 'early access',
     items: 5,
-    freeBoxes: 3,
-    note: null as string | null,
+    blurb: 'Great for a light move-out — a few boxes, a lamp, maybe a fan. Simple and affordable.',
     badge: 'Save $50',
     popular: false,
     showSmallPrint: true,
@@ -37,8 +35,7 @@ const plans = [
     priceDisplay: '$250',
     subPrice: 'early access',
     items: 10,
-    freeBoxes: 7,
-    note: null as string | null,
+    blurb: 'The go-to for most students — covers the typical mix of boxes, a chair, fridge, and a few extra items.',
     badge: 'Save $50',
     popular: true,
     showSmallPrint: true,
@@ -51,8 +48,7 @@ const plans = [
     priceDisplay: '$419.99',
     subPrice: 'early access',
     items: 20,
-    freeBoxes: 12,
-    note: null as string | null,
+    blurb: 'For students who have really settled in — furniture, appliances, the works. Plenty of room.',
     badge: 'Save $80',
     popular: false,
     showSmallPrint: true,
@@ -65,8 +61,7 @@ const plans = [
     priceDisplay: '$700',
     subPrice: null as string | null,
     items: 30,
-    freeBoxes: 20,
-    note: 'Best for suitemates',
+    blurb: 'Perfect for suitemates splitting a booking. More items, one pickup, one price.',
     badge: null as string | null,
     popular: false,
     showSmallPrint: true,
@@ -122,7 +117,7 @@ export default function Pricing() {
                 </h3>
 
                 {/* Price */}
-                <div className="mb-4">
+                <div className="mb-3">
                   <span className={`text-3xl font-bold ${plan.popular ? 'text-white' : 'text-navy'}`}>
                     {plan.priceDisplay}
                   </span>
@@ -140,33 +135,22 @@ export default function Pricing() {
                   )}
                 </div>
 
-                {/* Features */}
-                <ul className="flex flex-col gap-2.5 mb-6 flex-1">
-                  <li className="flex items-start gap-2">
-                    <span className={`mt-0.5 text-xs ${plan.popular ? 'text-gold' : 'text-navy'}`}>✓</span>
-                    <span className={`text-sm ${plan.popular ? 'text-gray-200' : 'text-gray-700'}`}>
-                      Up to <strong>{plan.items} items</strong>, any mix
-                    </span>
-                  </li>
-                  {plan.freeBoxes > 0 && (
-                    <li className="flex items-start gap-2">
-                      <span className={`mt-0.5 text-xs ${plan.popular ? 'text-gold' : 'text-navy'}`}>✓</span>
-                      <span className={`text-sm ${plan.popular ? 'text-gray-200' : 'text-gray-700'}`}>
-                        <strong>{plan.freeBoxes} free boxes</strong> included
-                      </span>
-                    </li>
-                  )}
-                  {plan.note && (
-                    <li className="flex items-start gap-2">
-                      <span className="mt-0.5 text-xs text-gold">★</span>
-                      <span className="text-sm text-gold">{plan.note}</span>
-                    </li>
-                  )}
-                </ul>
+                {/* Items */}
+                <div className="mb-4 flex items-center gap-2">
+                  <span className={`text-xs ${plan.popular ? 'text-gold' : 'text-navy'}`}>✓</span>
+                  <span className={`text-sm ${plan.popular ? 'text-gray-200' : 'text-gray-700'}`}>
+                    Up to <strong>{plan.items} items</strong>, any mix
+                  </span>
+                </div>
+
+                {/* Blurb */}
+                <p className={`text-xs leading-relaxed mb-4 flex-1 ${plan.popular ? 'text-white/70' : 'text-gray-500'}`}>
+                  {plan.blurb}
+                </p>
 
                 {/* Small print */}
                 {plan.showSmallPrint && (
-                  <p className={`text-xs mb-4 leading-relaxed ${plan.popular ? 'text-white/50' : 'text-gray-400'}`}>
+                  <p className={`text-xs mb-4 leading-relaxed ${plan.popular ? 'text-white/40' : 'text-gray-400'}`}>
                     Includes any mix of Tier 1, 2, and 3 items up to your plan limit. Overage rates only apply beyond your included items.
                   </p>
                 )}
