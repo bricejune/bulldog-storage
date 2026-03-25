@@ -3,6 +3,7 @@ import Hero from "./components/Hero";
 import WhyBulldog from "./components/WhyBulldog";
 import HowItWorks from "./components/HowItWorks";
 import Pricing from "./components/Pricing";
+import PricingCalculator from "./components/PricingCalculator";
 import ItemTierGuide from "./components/ItemTierGuide";
 import Testimonials from "./components/Testimonials";
 import FAQ from "./components/FAQ";
@@ -17,6 +18,7 @@ export default function Home() {
       <WhyBulldog />
       <HowItWorks />
       <Pricing />
+      <PricingCalculator />
       <ItemTierGuide />
       <Testimonials />
       <FAQ />

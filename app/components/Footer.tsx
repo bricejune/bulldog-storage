@@ -66,13 +66,6 @@ export default function Footer() {
                 <Phone size={15} className="flex-shrink-0" />
                 (301) 653-6369
               </a>
-              <a
-                href="#"
-                className="flex items-center gap-2.5 text-sm text-white/70 hover:text-white transition-colors"
-              >
-                <span className="text-base leading-none">📸</span>
-                @bulldogstorage
-              </a>
             </div>
           </div>
         </div>

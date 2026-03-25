@@ -93,12 +93,12 @@ const DORMS = [
 
 const INDIVIDUAL_ITEMS: { name: string; tier: string }[] = [
   { name: 'Handbag', tier: 'Tier 1' },
-  { name: 'Storage Box', tier: 'Tier 2' },
-  { name: 'Plastic Tote', tier: 'Tier 2' },
-  { name: 'Plastic Tub', tier: 'Tier 2' },
-  { name: 'Duffle', tier: 'Tier 2' },
+  { name: 'Moving Box', tier: 'Tier 2' },
+  { name: 'Tote Bin', tier: 'Tier 2' },
+  { name: 'Storage Tub', tier: 'Tier 2' },
+  { name: 'Duffel Bag', tier: 'Tier 2' },
   { name: 'Suitcase', tier: 'Tier 2' },
-  { name: 'Case', tier: 'Tier 2' },
+  { name: 'Hard-Shell Case', tier: 'Tier 2' },
   { name: 'Basket', tier: 'Tier 2' },
 ]
 

@@ -67,23 +67,6 @@ export default function Contact() {
                   </div>
                 </a>
 
-                <a
-                  href="#"
-                  className="flex items-center gap-4 group"
-                >
-                  <div
-                    className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
-                    style={{ backgroundColor: '#1B2A4A10' }}
-                  >
-                    <ExternalLink size={20} style={{ color: '#1B2A4A' }} />
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Instagram</p>
-                    <p className="text-base font-semibold group-hover:underline" style={{ color: '#1B2A4A' }}>
-                      @bulldogstorage
-                    </p>
-                  </div>
-                </a>
               </div>
             </div>
 
