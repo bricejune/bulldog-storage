@@ -134,7 +134,7 @@ export default function PricingCalculator() {
             {total === 0 ? (
               <div className="flex flex-col items-center justify-center bg-[#F8F9FA] rounded-3xl p-12 text-center h-full">
                 <span className="text-5xl mb-4">👆</span>
-                <p className="text-gray-500 font-medium">Add items on the left to see your best plan and price.</p>
+                <p className="text-gray-500 font-medium">Add items above to see your best plan and price.</p>
               </div>
             ) : (
               <>
