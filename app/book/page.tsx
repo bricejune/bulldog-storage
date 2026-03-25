@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { ChevronDown, ChevronUp, Check, AlertTriangle, ArrowLeft } from 'lucide-react'
+import { useAuth } from '../context/AuthContext'
 
 // ---------------------------------------------------------------------------
 // Types & constants
@@ -16,6 +17,7 @@ type BookingState = {
   agreedToTerms: boolean
   plan: PlanId | null
   items: { tier1: number; tier2: number; tier3: number }
+  itemsUnsure: boolean
   individualItems: string[]
   boxesNeeded: number
   extraBoxes: number
@@ -45,6 +47,7 @@ const DEFAULT_STATE: BookingState = {
   agreedToTerms: false,
   plan: null,
   items: { tier1: 0, tier2: 0, tier3: 0 },
+  itemsUnsure: false,
   individualItems: [],
   boxesNeeded: 0,
   extraBoxes: 0,
@@ -340,33 +343,49 @@ function Counter({
 // ---------------------------------------------------------------------------
 
 export default function BookPage() {
+  const { user } = useAuth()
   const [state, setState] = useState<BookingState>(DEFAULT_STATE)
   const [tierGuideOpen, setTierGuideOpen] = useState(false)
   const [promoInput, setPromoInput] = useState('')
   const [termsAccepted, setTermsAccepted] = useState(false)
+  const [authMounted, setAuthMounted] = useState(false)
 
-  // Load from localStorage on mount
+  // Determine per-user storage key
+  const storageKey = user ? `bulldog-booking-${user.id}` : 'bulldog-booking'
+
+  // Load from localStorage on mount / when user changes
   useEffect(() => {
+    setAuthMounted(true)
     try {
-      const saved = localStorage.getItem('bulldog-booking')
+      const saved = localStorage.getItem(storageKey)
       if (saved) {
         const parsed = JSON.parse(saved) as BookingState
-        setState(parsed)
+        // If user is logged in and booking is at step 0 (auth gate), skip to step 0 with email pre-filled
+        if (user && parsed.step === 0) {
+          setState({ ...parsed, email: user.email || parsed.email })
+        } else {
+          setState(parsed)
+        }
         setPromoInput(parsed.promoCode || '')
+      } else if (user) {
+        // No booking yet for this user — start fresh but pre-fill email
+        setState((prev) => ({ ...prev, email: user.email }))
       }
     } catch {
       // ignore
     }
-  }, [])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user])
 
   // Save to localStorage on every state change
   useEffect(() => {
+    if (!authMounted) return
     try {
-      localStorage.setItem('bulldog-booking', JSON.stringify(state))
+      localStorage.setItem(storageKey, JSON.stringify(state))
     } catch {
       // ignore
     }
-  }, [state])
+  }, [state, storageKey, authMounted])
 
   const update = (patch: Partial<BookingState>) =>
     setState((prev) => ({ ...prev, ...patch }))
@@ -397,7 +416,17 @@ export default function BookPage() {
     // TODO: Replace with Stripe Checkout. Create session with plan price IDs before showing success.
     // TODO: Send confirmation email via EmailJS/Resend with booking details.
     const ref = `BDS-${Math.floor(10000 + Math.random() * 90000)}`
-    update({ bookingRef: ref, confirmed: true })
+    const confirmed = { ...state, bookingRef: ref, confirmed: true }
+    setState(confirmed)
+    try {
+      // Save under user-specific key if logged in
+      if (user) {
+        localStorage.setItem(`bulldog-booking-${user.id}`, JSON.stringify(confirmed))
+      }
+      localStorage.setItem(storageKey, JSON.stringify(confirmed))
+    } catch {
+      // ignore
+    }
   }
 
   const formatDate = (d: string) => {
@@ -504,35 +533,61 @@ export default function BookPage() {
             <Link href="/" className="inline-block mb-8">
               <span className="text-3xl font-bold text-white">Bulldog <span style={{ color: '#F5A623' }}>Storage</span></span>
             </Link>
-            <h1 className="text-2xl font-bold text-white mb-2">Book Your Storage</h1>
-            <p className="text-white/60">Let&apos;s get started. Enter your email to continue.</p>
+            {user ? (
+              <>
+                <h1 className="text-2xl font-bold text-white mb-2">Welcome back, {user.name.split(' ')[0]}!</h1>
+                <p className="text-white/60">Continue your booking below.</p>
+              </>
+            ) : (
+              <>
+                <h1 className="text-2xl font-bold text-white mb-2">Book Your Storage</h1>
+                <p className="text-white/60">Let&apos;s get started. Enter your email to continue.</p>
+              </>
+            )}
           </div>
 
           <div className="bg-white rounded-2xl p-8 shadow-2xl">
-            <div className="flex flex-col gap-5">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Email Address</label>
-                <input
-                  type="email"
-                  value={state.email}
-                  onChange={(e) => update({ email: e.target.value })}
-                  placeholder="your.name@yale.edu"
-                  className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-navy transition-all"
-                  onKeyDown={(e) => { if (e.key === 'Enter' && state.email) update({ step: 1 }) }}
-                />
-                <p className="text-xs text-gray-400 mt-1.5">Yale email preferred. All students welcome.</p>
+            {user ? (
+              <div className="flex flex-col gap-5">
+                <div className="rounded-xl p-4 text-sm text-gray-700" style={{ backgroundColor: '#1B2A4A0D' }}>
+                  Booking as <span className="font-semibold" style={{ color: '#1B2A4A' }}>{user.email}</span>
+                </div>
+                <button
+                  onClick={() => update({ step: 1, email: user.email })}
+                  className="w-full py-3.5 rounded-xl text-white font-semibold text-sm transition-colors"
+                  style={{ backgroundColor: '#F5A623' }}
+                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#d4891a' }}
+                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#F5A623')}
+                >
+                  Continue
+                </button>
               </div>
-              <button
-                onClick={() => { if (state.email) update({ step: 1 }) }}
-                disabled={!state.email}
-                className="w-full py-3.5 rounded-xl text-white font-semibold text-sm transition-colors disabled:opacity-40"
-                style={{ backgroundColor: '#F5A623' }}
-                onMouseEnter={(e) => { if (state.email) e.currentTarget.style.backgroundColor = '#d4891a' }}
-                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#F5A623')}
-              >
-                Continue
-              </button>
-            </div>
+            ) : (
+              <div className="flex flex-col gap-5">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Email Address</label>
+                  <input
+                    type="email"
+                    value={state.email}
+                    onChange={(e) => update({ email: e.target.value })}
+                    placeholder="your.name@yale.edu"
+                    className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-navy transition-all"
+                    onKeyDown={(e) => { if (e.key === 'Enter' && state.email) update({ step: 1 }) }}
+                  />
+                  <p className="text-xs text-gray-400 mt-1.5">Yale email preferred. All students welcome.</p>
+                </div>
+                <button
+                  onClick={() => { if (state.email) update({ step: 1 }) }}
+                  disabled={!state.email}
+                  className="w-full py-3.5 rounded-xl text-white font-semibold text-sm transition-colors disabled:opacity-40"
+                  style={{ backgroundColor: '#F5A623' }}
+                  onMouseEnter={(e) => { if (state.email) e.currentTarget.style.backgroundColor = '#d4891a' }}
+                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#F5A623')}
+                >
+                  Continue
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -796,19 +851,19 @@ export default function BookPage() {
                   <label
                     className="flex items-start gap-3 cursor-pointer mb-6 px-4 py-4 rounded-xl border-2 transition-all"
                     style={{
-                      borderColor: state.items.tier1 === -1 ? '#F5A623' : '#e5e7eb',
-                      backgroundColor: state.items.tier1 === -1 ? '#F5A62308' : '#ffffff',
+                      borderColor: state.itemsUnsure ? '#F5A623' : '#e5e7eb',
+                      backgroundColor: state.itemsUnsure ? '#F5A62308' : '#ffffff',
                     }}
                   >
                     <div className="relative flex-shrink-0 mt-0.5">
                       <input
                         type="checkbox"
-                        checked={state.items.tier1 === -1}
+                        checked={state.itemsUnsure}
                         onChange={(e) => {
                           if (e.target.checked) {
-                            update({ items: { tier1: -1, tier2: 0, tier3: 0 }, boxesNeeded: 0, extraBoxes: 0 })
+                            update({ itemsUnsure: true, items: { tier1: -1, tier2: 0, tier3: 0 }, boxesNeeded: 0, extraBoxes: 0 })
                           } else {
-                            update({ items: { tier1: 0, tier2: 0, tier3: 0 } })
+                            update({ itemsUnsure: false, items: { tier1: 0, tier2: 0, tier3: 0 } })
                           }
                         }}
                         className="sr-only"
@@ -816,20 +871,25 @@ export default function BookPage() {
                       <div
                         className="w-5 h-5 rounded border-2 flex items-center justify-center transition-all"
                         style={{
-                          borderColor: state.items.tier1 === -1 ? '#F5A623' : '#d1d5db',
-                          backgroundColor: state.items.tier1 === -1 ? '#F5A623' : '#ffffff',
+                          borderColor: state.itemsUnsure ? '#F5A623' : '#d1d5db',
+                          backgroundColor: state.itemsUnsure ? '#F5A623' : '#ffffff',
                         }}
                       >
-                        {state.items.tier1 === -1 && <Check size={11} color="white" strokeWidth={3} />}
+                        {state.itemsUnsure && <Check size={11} color="white" strokeWidth={3} />}
                       </div>
                     </div>
                     <div>
-                      <p className="text-sm font-semibold text-gray-800">I&apos;m still figuring out what I&apos;m bringing</p>
+                      <p className="text-sm font-semibold text-gray-800">I&apos;m not sure yet — I&apos;ll figure it out closer to move-out</p>
                       <p className="text-xs text-gray-500 mt-0.5">Just get me in the queue — I&apos;ll update my items from the dashboard later.</p>
                     </div>
                   </label>
+                  {state.itemsUnsure && (
+                    <div className="mb-4 rounded-xl p-4 text-sm" style={{ backgroundColor: '#1B2A4A0D', color: '#1B2A4A' }}>
+                      You can add items from your dashboard after booking.
+                    </div>
+                  )}
 
-                  {state.items.tier1 !== -1 && (
+                  {!state.itemsUnsure && state.items.tier1 !== -1 && (
                     <>
                       {/* Boxes/bins counter */}
                       <div className="mb-6">
@@ -1301,13 +1361,21 @@ export default function BookPage() {
                 {/* Items */}
                 <div className="px-5 py-4 border-b border-gray-100">
                   <p className="text-xs text-gray-400 uppercase tracking-wide font-medium mb-2">Items</p>
-                  <div className="flex gap-4 text-sm text-gray-600">
-                    <span>Tier 1: <strong style={{ color: '#1B2A4A' }}>{state.items.tier1}</strong></span>
-                    <span>Tier 2: <strong style={{ color: '#1B2A4A' }}>{state.items.tier2}</strong></span>
-                    {state.plan !== 'individual' && (
+                  {state.itemsUnsure || (state.plan !== 'individual' && state.items.tier1 === -1) ? (
+                    <p className="text-sm italic text-gray-400">TBD — you&apos;ll confirm items at pickup</p>
+                  ) : state.plan === 'individual' ? (
+                    <div className="flex flex-col gap-1 text-sm text-gray-600">
+                      {state.individualItems.map((item) => (
+                        <span key={item}>{item}</span>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="flex gap-4 text-sm text-gray-600">
+                      <span>Tier 1: <strong style={{ color: '#1B2A4A' }}>{state.items.tier1}</strong></span>
+                      <span>Tier 2: <strong style={{ color: '#1B2A4A' }}>{state.items.tier2}</strong></span>
                       <span>Tier 3: <strong style={{ color: '#1B2A4A' }}>{state.items.tier3}</strong></span>
-                    )}
-                  </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Dates */}
