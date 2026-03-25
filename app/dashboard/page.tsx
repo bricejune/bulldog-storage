@@ -371,8 +371,8 @@ export default function DashboardPage() {
       <div className="px-4 py-6 sm:py-8" style={{ backgroundColor: '#1B2A4A' }}>
         <div className="max-w-2xl mx-auto flex items-center justify-between">
           <div>
-            <Link href="/" className="text-white/60 text-xs hover:text-white/90 transition-colors mb-1 block">
-              ← Back to home
+            <Link href="/" className="inline-block mb-3">
+              <img src="/logo-woodmark.png" alt="Bulldog Storage" className="h-12 w-auto object-contain brightness-0 invert" />
             </Link>
             <h1 className="text-xl sm:text-2xl font-bold text-white">
               Hi, {user.name.split(' ')[0]}!

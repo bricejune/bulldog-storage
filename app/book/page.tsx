@@ -447,7 +447,7 @@ export default function BookPage() {
         <div className="w-full max-w-md">
           <div className="text-center mb-10">
             <Link href="/" className="inline-block mb-8">
-              <span className="text-3xl font-bold text-white">Bulldog <span style={{ color: '#F5A623' }}>Storage</span></span>
+              <img src="/logo-woodmark.png" alt="Bulldog Storage" className="h-16 w-auto object-contain mx-auto brightness-0 invert" />
             </Link>
             <h1 className="text-2xl font-bold text-white mb-2">Before we get started</h1>
             <p className="text-white/60">Please review and agree to our policies.</p>
@@ -531,7 +531,7 @@ export default function BookPage() {
         <div className="w-full max-w-md">
           <div className="text-center mb-10">
             <Link href="/" className="inline-block mb-8">
-              <span className="text-3xl font-bold text-white">Bulldog <span style={{ color: '#F5A623' }}>Storage</span></span>
+              <img src="/logo-woodmark.png" alt="Bulldog Storage" className="h-16 w-auto object-contain mx-auto brightness-0 invert" />
             </Link>
             {user ? (
               <>

@@ -76,10 +76,8 @@ function AuthPageInner() {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
-          <Link href="/">
-            <span className="text-3xl font-bold" style={{ color: '#1B2A4A' }}>
-              Bulldog <span style={{ color: '#F5A623' }}>Storage</span>
-            </span>
+          <Link href="/" className="inline-block">
+            <img src="/logo-woodmark.png" alt="Bulldog Storage" className="h-20 w-auto object-contain mx-auto" />
           </Link>
           <p className="text-gray-500 mt-2 text-sm">Yale&apos;s most careful student storage</p>
         </div>
