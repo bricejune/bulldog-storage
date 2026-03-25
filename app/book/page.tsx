@@ -13,7 +13,7 @@ type PlanId = 'individual' | 'essentials' | 'flex' | 'flexplus' | 'group'
 
 type BookingState = {
   email: string
-  step: -1 | 0 | 1 | 2 | 3 | 4 | 5
+  step: 0 | 1 | 2 | 3 | 4 | 5 | 6
   agreedToTerms: boolean
   plan: PlanId | null
   items: { tier1: number; tier2: number; tier3: number }
@@ -28,6 +28,15 @@ type BookingState = {
   returnDate: string
   returnDateUnsure: boolean
   returnTime: 'morning' | 'afternoon'
+  currentBuilding: string
+  currentRoom: string
+  currentDormOther: string
+  returnBuilding: string
+  returnRoom: string
+  returnBuildingOther: string
+  returnLocationUnsure: boolean
+  attendedPickup: boolean
+  pickupInstructions: string
   name: string
   phone: string
   dorm: string
@@ -35,15 +44,13 @@ type BookingState = {
   promoApplied: boolean
   additionalNotes: string
   conditionAcknowledged: boolean
-  attendedPickup: boolean
-  pickupInstructions: string
   bookingRef: string
   confirmed: boolean
 }
 
 const DEFAULT_STATE: BookingState = {
   email: '',
-  step: -1,
+  step: 0,
   agreedToTerms: false,
   plan: null,
   items: { tier1: 0, tier2: 0, tier3: 0 },
@@ -58,6 +65,15 @@ const DEFAULT_STATE: BookingState = {
   returnDate: '',
   returnDateUnsure: false,
   returnTime: 'morning',
+  currentBuilding: '',
+  currentRoom: '',
+  currentDormOther: '',
+  returnBuilding: '',
+  returnRoom: '',
+  returnBuildingOther: '',
+  returnLocationUnsure: false,
+  attendedPickup: true,
+  pickupInstructions: '',
   name: '',
   phone: '',
   dorm: '',
@@ -65,8 +81,6 @@ const DEFAULT_STATE: BookingState = {
   promoApplied: false,
   additionalNotes: '',
   conditionAcknowledged: false,
-  attendedPickup: true,
-  pickupInstructions: '',
   bookingRef: '',
   confirmed: false,
 }
@@ -91,7 +105,7 @@ const DORMS = [
   'Grace Hopper College', 'Jonathan Edwards College', 'Lanman-Wright Hall', 'Lawrence Hall',
   'Lawrance Hall', 'Morse College', 'Old Campus', 'Pierson College', 'Saybrook College',
   'Silliman College', 'Stiles College', 'Timothy Dwight College', 'Trumbull College',
-  'Vanderbilt Hall', 'Welch Hall', 'Other',
+  'Vanderbilt Hall', 'Welch Hall', 'Other / Off Campus',
 ]
 
 const INDIVIDUAL_ITEMS: { name: string; tier: string }[] = [
@@ -173,7 +187,7 @@ function calculateTotal(state: BookingState): {
 // ---------------------------------------------------------------------------
 
 function ProgressBar({ step }: { step: number }) {
-  const steps = ['Plan', 'Items', 'Dates', 'Details', 'Review']
+  const steps = ['Plan', 'Items', 'Dates', 'Pickup', 'Details', 'Review']
   return (
     <div className="flex items-center gap-0 mb-10">
       {steps.map((label, i) => {
@@ -436,90 +450,6 @@ export default function BookPage() {
   }
 
   // ---------------------------------------------------------------------------
-  // Step -1 — Terms / Privacy gate
-  // ---------------------------------------------------------------------------
-  if (state.step === -1) {
-    return (
-      <div
-        className="min-h-screen flex flex-col items-center justify-center px-4 py-12"
-        style={{ backgroundColor: '#1B2A4A' }}
-      >
-        <div className="w-full max-w-md">
-          <div className="text-center mb-10">
-            <Link href="/" className="inline-block mb-8">
-              <img src="/logo-woodmark.png" alt="Bulldog Storage" className="h-16 w-auto object-contain mx-auto brightness-0 invert" />
-            </Link>
-            <h1 className="text-2xl font-bold text-white mb-2">Before we get started</h1>
-            <p className="text-white/60">Please review and agree to our policies.</p>
-          </div>
-
-          <div className="bg-white rounded-2xl p-8 shadow-2xl">
-            <div className="flex flex-col gap-6">
-              <div className="flex flex-col gap-3">
-                <a
-                  href="/terms"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-between px-5 py-4 rounded-xl border-2 border-gray-200 hover:border-navy transition-colors group"
-                >
-                  <span className="text-sm font-semibold text-navy">Terms of Service</span>
-                  <span className="text-xs text-gray-400 group-hover:text-navy transition-colors">Open ↗</span>
-                </a>
-                <a
-                  href="/privacy"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-between px-5 py-4 rounded-xl border-2 border-gray-200 hover:border-navy transition-colors group"
-                >
-                  <span className="text-sm font-semibold text-navy">Privacy Policy</span>
-                  <span className="text-xs text-gray-400 group-hover:text-navy transition-colors">Open ↗</span>
-                </a>
-              </div>
-
-              <label className="flex items-start gap-3 cursor-pointer">
-                <div className="relative flex-shrink-0 mt-0.5">
-                  <input
-                    type="checkbox"
-                    checked={state.agreedToTerms}
-                    onChange={(e) => update({ agreedToTerms: e.target.checked })}
-                    className="sr-only"
-                  />
-                  <div
-                    className="w-5 h-5 rounded border-2 flex items-center justify-center transition-all"
-                    style={{
-                      borderColor: state.agreedToTerms ? '#1B2A4A' : '#d1d5db',
-                      backgroundColor: state.agreedToTerms ? '#1B2A4A' : '#ffffff',
-                    }}
-                  >
-                    {state.agreedToTerms && <Check size={11} color="white" strokeWidth={3} />}
-                  </div>
-                </div>
-                <span className="text-sm text-gray-600 leading-relaxed">
-                  I have read and agree to Bulldog Storage&apos;s{' '}
-                  <a href="/terms" target="_blank" rel="noopener noreferrer" className="underline font-medium text-navy">Terms of Service</a>{' '}
-                  and{' '}
-                  <a href="/privacy" target="_blank" rel="noopener noreferrer" className="underline font-medium text-navy">Privacy Policy</a>.
-                </span>
-              </label>
-
-              <button
-                onClick={() => { if (state.agreedToTerms) update({ step: 0 }) }}
-                disabled={!state.agreedToTerms}
-                className="w-full py-3.5 rounded-xl text-white font-semibold text-sm transition-colors disabled:opacity-40"
-                style={{ backgroundColor: '#F5A623' }}
-                onMouseEnter={(e) => { if (state.agreedToTerms) e.currentTarget.style.backgroundColor = '#d4891a' }}
-                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#F5A623')}
-              >
-                Continue
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  // ---------------------------------------------------------------------------
   // Step 0 — Auth gate
   // ---------------------------------------------------------------------------
   if (state.step === 0) {
@@ -693,10 +623,7 @@ export default function BookPage() {
             <ArrowLeft size={15} />
             Back to home
           </Link>
-          <span className="text-xl font-bold">
-            <span style={{ color: '#1B2A4A' }}>Bulldog</span>
-            <span style={{ color: '#F5A623' }}> Storage</span>
-          </span>
+          <img src="/logo-woodmark.png" alt="Bulldog Storage" className="h-16 w-auto object-contain mx-auto brightness-0 invert" />
         </div>
 
         <ProgressBar step={state.step} />
@@ -1133,116 +1060,139 @@ export default function BookPage() {
                   className="px-8 py-3 rounded-xl text-white font-semibold text-sm transition-colors disabled:opacity-40"
                   style={{ backgroundColor: '#1B2A4A' }}
                 >
-                  Next: Your Details →
+                  Next: Pickup & Delivery →
                 </button>
               </div>
             </div>
           )}
 
           {/* ---------------------------------------------------------------- */}
-          {/* Step 4 — Your Details */}
+          {/* Step 4 — Pickup & Delivery Details */}
           {/* ---------------------------------------------------------------- */}
           {state.step === 4 && (
             <div>
-              <h2 className="text-2xl font-bold mb-1" style={{ color: '#1B2A4A' }}>Your Details</h2>
-              <p className="text-sm text-gray-500 mb-6">Almost done. A few more details and we&apos;re set.</p>
+              <h2 className="text-2xl font-bold mb-1" style={{ color: '#1B2A4A' }}>Pickup & Delivery Details</h2>
+              <p className="text-sm text-gray-500 mb-6">Tell us where to pick up and where to deliver.</p>
 
-              <div className="flex flex-col gap-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Full Name</label>
-                    <input
-                      type="text"
-                      required
-                      value={state.name}
-                      onChange={(e) => update({ name: e.target.value })}
-                      placeholder="Your full name"
-                      className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Phone</label>
-                    <input
-                      type="tel"
-                      required
-                      value={state.phone}
-                      onChange={(e) => update({ phone: e.target.value })}
-                      placeholder="(555) 555-5555"
-                      className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
-                  <input
-                    type="email"
-                    required
-                    value={state.email}
-                    onChange={(e) => update({ email: e.target.value })}
-                    className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Dorm / Building</label>
-                  <select
-                    value={state.dorm}
-                    onChange={(e) => update({ dorm: e.target.value })}
-                    className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 bg-white"
-                  >
-                    <option value="">Select your dorm...</option>
-                    {DORMS.map((d) => (
-                      <option key={d} value={d}>{d}</option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Promo code */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Promo Code</label>
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={promoInput}
-                      onChange={(e) => setPromoInput(e.target.value)}
-                      placeholder="Enter promo code"
-                      disabled={state.promoApplied}
-                      className="flex-1 rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 disabled:bg-gray-50 disabled:text-gray-400"
-                    />
-                    {state.promoApplied ? (
-                      <div className="flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold" style={{ backgroundColor: '#1B2A4A10', color: '#1B2A4A' }}>
-                        <Check size={15} />
-                        Applied
-                      </div>
-                    ) : (
-                      <button
-                        onClick={handleApplyPromo}
-                        disabled={!promoInput.trim()}
-                        className="px-5 py-3 rounded-xl text-sm font-semibold text-white transition-colors disabled:opacity-40"
-                        style={{ backgroundColor: '#1B2A4A' }}
+              <div className="flex flex-col gap-6">
+                {/* Where should we pick up? */}
+                <div className="rounded-xl border border-gray-200 p-5">
+                  <h3 className="text-base font-semibold mb-4" style={{ color: '#1B2A4A' }}>Where should we pick up?</h3>
+                  <div className="flex flex-col gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1.5">Dorm / Building</label>
+                      <select
+                        value={state.currentBuilding}
+                        onChange={(e) => update({ currentBuilding: e.target.value, currentDormOther: e.target.value !== 'Other / Off Campus' ? '' : state.currentDormOther })}
+                        className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 bg-white"
                       >
-                        Apply
-                      </button>
+                        <option value="">Select your dorm or building...</option>
+                        {DORMS.map((d) => (
+                          <option key={d} value={d}>{d}</option>
+                        ))}
+                      </select>
+                    </div>
+                    {state.currentBuilding && state.currentBuilding !== 'Other / Off Campus' && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1.5">Room number or suite</label>
+                        <input
+                          type="text"
+                          value={state.currentRoom}
+                          onChange={(e) => update({ currentRoom: e.target.value })}
+                          placeholder="e.g. 214 or Suite 3B"
+                          className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2"
+                        />
+                      </div>
+                    )}
+                    {state.currentBuilding === 'Other / Off Campus' && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1.5">Tell us your address or location</label>
+                        <textarea
+                          rows={3}
+                          value={state.currentDormOther}
+                          onChange={(e) => update({ currentDormOther: e.target.value })}
+                          placeholder="Your full address or location details..."
+                          className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 resize-none"
+                        />
+                      </div>
                     )}
                   </div>
-                  {state.promoApplied && (
-                    <p className="text-xs mt-1.5 font-medium" style={{ color: '#1B2A4A' }}>
-                      ✓ 10% discount applied!
-                    </p>
-                  )}
                 </div>
 
-                {/* Additional notes */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Additional Notes (optional)</label>
-                  <textarea
-                    rows={3}
-                    value={state.additionalNotes}
-                    onChange={(e) => update({ additionalNotes: e.target.value })}
-                    placeholder="Room number, access instructions, anything else we should know..."
-                    className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 resize-none"
-                  />
+                {/* Where should we deliver next fall? */}
+                <div className="rounded-xl border border-gray-200 p-5">
+                  <h3 className="text-base font-semibold mb-1" style={{ color: '#1B2A4A' }}>Where should we deliver next fall?</h3>
+                  <p className="text-xs text-gray-400 mb-4">Not sure yet? No problem — you can update this from your dashboard after booking.</p>
+
+                  {/* Not sure yet checkbox */}
+                  <label
+                    className="flex items-start gap-3 cursor-pointer mb-4 px-4 py-3 rounded-xl border-2 transition-all"
+                    style={{
+                      borderColor: state.returnLocationUnsure ? '#F5A623' : '#e5e7eb',
+                      backgroundColor: state.returnLocationUnsure ? '#F5A62308' : '#ffffff',
+                    }}
+                  >
+                    <div className="relative flex-shrink-0 mt-0.5">
+                      <input
+                        type="checkbox"
+                        checked={state.returnLocationUnsure}
+                        onChange={(e) => update({ returnLocationUnsure: e.target.checked })}
+                        className="sr-only"
+                      />
+                      <div
+                        className="w-5 h-5 rounded border-2 flex items-center justify-center transition-all"
+                        style={{
+                          borderColor: state.returnLocationUnsure ? '#F5A623' : '#d1d5db',
+                          backgroundColor: state.returnLocationUnsure ? '#F5A623' : '#ffffff',
+                        }}
+                      >
+                        {state.returnLocationUnsure && <Check size={11} color="white" strokeWidth={3} />}
+                      </div>
+                    </div>
+                    <span className="text-sm text-gray-700 font-medium">Not sure yet — I&apos;ll update from my dashboard</span>
+                  </label>
+
+                  {!state.returnLocationUnsure && (
+                    <div className="flex flex-col gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1.5">Dorm / Building</label>
+                        <select
+                          value={state.returnBuilding}
+                          onChange={(e) => update({ returnBuilding: e.target.value, returnBuildingOther: e.target.value !== 'Other / Off Campus' ? '' : state.returnBuildingOther })}
+                          className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 bg-white"
+                        >
+                          <option value="">Select your dorm or building...</option>
+                          {DORMS.map((d) => (
+                            <option key={d} value={d}>{d}</option>
+                          ))}
+                        </select>
+                      </div>
+                      {state.returnBuilding && state.returnBuilding !== 'Other / Off Campus' && (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1.5">Room number or suite</label>
+                          <input
+                            type="text"
+                            value={state.returnRoom}
+                            onChange={(e) => update({ returnRoom: e.target.value })}
+                            placeholder="e.g. 214 or Suite 3B"
+                            className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2"
+                          />
+                        </div>
+                      )}
+                      {state.returnBuilding === 'Other / Off Campus' && (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1.5">Tell us your address or location</label>
+                          <textarea
+                            rows={3}
+                            value={state.returnBuildingOther}
+                            onChange={(e) => update({ returnBuildingOther: e.target.value })}
+                            placeholder="Your full address or location details..."
+                            className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 resize-none"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {/* Pickup Coordination */}
@@ -1291,6 +1241,119 @@ export default function BookPage() {
                     </div>
                   )}
                 </div>
+              </div>
+
+              <div className="flex justify-between mt-8">
+                <button
+                  onClick={() => update({ step: 3 })}
+                  className="px-6 py-3 rounded-xl text-sm font-semibold border-2 transition-colors"
+                  style={{ borderColor: '#1B2A4A', color: '#1B2A4A' }}
+                >
+                  ← Back
+                </button>
+                <button
+                  onClick={() => update({ step: 5 })}
+                  disabled={!state.currentBuilding || (!state.returnLocationUnsure && !state.returnBuilding)}
+                  className="px-8 py-3 rounded-xl text-white font-semibold text-sm transition-colors disabled:opacity-40"
+                  style={{ backgroundColor: '#1B2A4A' }}
+                >
+                  Next: Your Details →
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* ---------------------------------------------------------------- */}
+          {/* Step 5 — Your Details */}
+          {/* ---------------------------------------------------------------- */}
+          {state.step === 5 && (
+            <div>
+              <h2 className="text-2xl font-bold mb-1" style={{ color: '#1B2A4A' }}>Your Details</h2>
+              <p className="text-sm text-gray-500 mb-6">Almost done. A few more details and we&apos;re set.</p>
+
+              <div className="flex flex-col gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Full Name</label>
+                    <input
+                      type="text"
+                      required
+                      value={state.name}
+                      onChange={(e) => update({ name: e.target.value })}
+                      placeholder="Your full name"
+                      className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Phone</label>
+                    <input
+                      type="tel"
+                      required
+                      value={state.phone}
+                      onChange={(e) => update({ phone: e.target.value })}
+                      placeholder="(555) 555-5555"
+                      className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
+                  <input
+                    type="email"
+                    required
+                    value={state.email}
+                    onChange={(e) => update({ email: e.target.value })}
+                    className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2"
+                  />
+                </div>
+
+                {/* Promo code */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Promo Code</label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={promoInput}
+                      onChange={(e) => setPromoInput(e.target.value)}
+                      placeholder="Enter promo code"
+                      disabled={state.promoApplied}
+                      className="flex-1 rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 disabled:bg-gray-50 disabled:text-gray-400"
+                    />
+                    {state.promoApplied ? (
+                      <div className="flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold" style={{ backgroundColor: '#1B2A4A10', color: '#1B2A4A' }}>
+                        <Check size={15} />
+                        Applied
+                      </div>
+                    ) : (
+                      <button
+                        onClick={handleApplyPromo}
+                        disabled={!promoInput.trim()}
+                        className="px-5 py-3 rounded-xl text-sm font-semibold text-white transition-colors disabled:opacity-40"
+                        style={{ backgroundColor: '#1B2A4A' }}
+                      >
+                        Apply
+                      </button>
+                    )}
+                  </div>
+                  {state.promoApplied && (
+                    <p className="text-xs mt-1.5 font-medium" style={{ color: '#1B2A4A' }}>
+                      ✓ 10% discount applied!
+                    </p>
+                  )}
+                </div>
+
+                {/* Additional notes */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Additional Notes (optional)</label>
+                  <textarea
+                    rows={3}
+                    value={state.additionalNotes}
+                    onChange={(e) => update({ additionalNotes: e.target.value })}
+                    placeholder="Anything else we should know..."
+                    className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 resize-none"
+                  />
+                </div>
 
                 {/* Condition acknowledgment */}
                 <label className="flex items-start gap-3 cursor-pointer group">
@@ -1319,15 +1382,15 @@ export default function BookPage() {
 
               <div className="flex justify-between mt-8">
                 <button
-                  onClick={() => update({ step: 3 })}
+                  onClick={() => update({ step: 4 })}
                   className="px-6 py-3 rounded-xl text-sm font-semibold border-2 transition-colors"
                   style={{ borderColor: '#1B2A4A', color: '#1B2A4A' }}
                 >
                   ← Back
                 </button>
                 <button
-                  onClick={() => update({ step: 5 })}
-                  disabled={!state.name || !state.phone || !state.email || !state.dorm || !state.conditionAcknowledged}
+                  onClick={() => update({ step: 6 })}
+                  disabled={!state.name || !state.phone || !state.email || !state.conditionAcknowledged}
                   className="px-8 py-3 rounded-xl text-white font-semibold text-sm transition-colors disabled:opacity-40"
                   style={{ backgroundColor: '#1B2A4A' }}
                 >
@@ -1338,9 +1401,9 @@ export default function BookPage() {
           )}
 
           {/* ---------------------------------------------------------------- */}
-          {/* Step 5 — Review & Confirm */}
+          {/* Step 6 — Review & Confirm */}
           {/* ---------------------------------------------------------------- */}
-          {state.step === 5 && state.plan && (
+          {state.step === 6 && state.plan && (
             <div>
               <h2 className="text-2xl font-bold mb-1" style={{ color: '#1B2A4A' }}>Review & Confirm</h2>
               <p className="text-sm text-gray-500 mb-6">Double-check everything before we lock it in.</p>
@@ -1353,7 +1416,7 @@ export default function BookPage() {
                   <div className="flex justify-between items-center">
                     <span className="font-semibold" style={{ color: '#1B2A4A' }}>{PLAN_INFO[state.plan].label}</span>
                     <span className="font-semibold" style={{ color: '#1B2A4A' }}>
-                      {state.plan === 'individual' ? `$${pricing.basePlan.toFixed(2)}` : `$${pricing.basePlan.toFixed(2)}`}
+                      ${pricing.basePlan.toFixed(2)}
                     </span>
                   </div>
                 </div>
@@ -1401,14 +1464,28 @@ export default function BookPage() {
                   </div>
                 </div>
 
-                {/* Contact */}
+                {/* Pickup & Delivery Locations */}
                 <div className="px-5 py-4 border-b border-gray-100">
-                  <p className="text-xs text-gray-400 uppercase tracking-wide font-medium mb-2">Details</p>
+                  <p className="text-xs text-gray-400 uppercase tracking-wide font-medium mb-2">Pickup & Delivery</p>
                   <div className="text-sm text-gray-600 space-y-1">
-                    <p><span className="font-medium" style={{ color: '#1B2A4A' }}>Name: </span>{state.name}</p>
-                    <p><span className="font-medium" style={{ color: '#1B2A4A' }}>Email: </span>{state.email}</p>
-                    <p><span className="font-medium" style={{ color: '#1B2A4A' }}>Phone: </span>{state.phone}</p>
-                    <p><span className="font-medium" style={{ color: '#1B2A4A' }}>Dorm: </span>{state.dorm}</p>
+                    <p>
+                      <span className="font-medium" style={{ color: '#1B2A4A' }}>Pickup from: </span>
+                      {state.currentBuilding === 'Other / Off Campus'
+                        ? state.currentDormOther || 'Other / Off Campus'
+                        : state.currentBuilding
+                          ? `${state.currentBuilding}${state.currentRoom ? `, Room ${state.currentRoom}` : ''}`
+                          : 'TBD'}
+                    </p>
+                    <p>
+                      <span className="font-medium" style={{ color: '#1B2A4A' }}>Deliver to: </span>
+                      {state.returnLocationUnsure
+                        ? 'TBD'
+                        : state.returnBuilding === 'Other / Off Campus'
+                          ? state.returnBuildingOther || 'Other / Off Campus'
+                          : state.returnBuilding
+                            ? `${state.returnBuilding}${state.returnRoom ? `, Room ${state.returnRoom}` : ''}`
+                            : 'TBD'}
+                    </p>
                   </div>
                 </div>
 
@@ -1426,6 +1503,16 @@ export default function BookPage() {
                         )}
                       </>
                     )}
+                  </div>
+                </div>
+
+                {/* Contact */}
+                <div className="px-5 py-4 border-b border-gray-100">
+                  <p className="text-xs text-gray-400 uppercase tracking-wide font-medium mb-2">Details</p>
+                  <div className="text-sm text-gray-600 space-y-1">
+                    <p><span className="font-medium" style={{ color: '#1B2A4A' }}>Name: </span>{state.name}</p>
+                    <p><span className="font-medium" style={{ color: '#1B2A4A' }}>Email: </span>{state.email}</p>
+                    <p><span className="font-medium" style={{ color: '#1B2A4A' }}>Phone: </span>{state.phone}</p>
                   </div>
                 </div>
 
@@ -1492,7 +1579,10 @@ export default function BookPage() {
                   </div>
                 </div>
                 <span className="text-sm text-gray-600 leading-relaxed">
-                  I agree to Bulldog Storage&apos;s terms of service. I understand cancellations within 7 days of pickup will receive a credit, not a refund.
+                  I agree to Bulldog Storage&apos;s{' '}
+                  <a href="/terms" target="_blank" rel="noopener noreferrer" className="underline font-medium text-navy">Terms of Service</a>{' '}
+                  and{' '}
+                  <a href="/privacy" target="_blank" rel="noopener noreferrer" className="underline font-medium text-navy">Privacy Policy</a>.
                 </span>
               </label>
 
@@ -1510,7 +1600,7 @@ export default function BookPage() {
 
               <div className="flex justify-start mt-4">
                 <button
-                  onClick={() => update({ step: 4 })}
+                  onClick={() => update({ step: 5 })}
                   className="px-6 py-3 rounded-xl text-sm font-semibold border-2 transition-colors"
                   style={{ borderColor: '#1B2A4A', color: '#1B2A4A' }}
                 >
