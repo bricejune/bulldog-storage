@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
+export const runtime = 'nodejs'
 
 const PRICE_IDS: Record<string, string> = {
   essentials: process.env.STRIPE_PRICE_ESSENTIALS!,
@@ -11,6 +11,10 @@ const PRICE_IDS: Record<string, string> = {
 }
 
 export async function POST(req: NextRequest) {
+  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+    apiVersion: '2025-02-24.acacia',
+  })
+
   try {
     const body = await req.json()
     const { plan, total, bookingRef, customerEmail, bookingData } = body
@@ -20,7 +24,6 @@ export async function POST(req: NextRequest) {
     let lineItems: Stripe.Checkout.SessionCreateParams.LineItem[]
 
     if (plan === 'individual') {
-      // Individual plan: variable price, charge exact total
       lineItems = [
         {
           price_data: {
@@ -39,8 +42,6 @@ export async function POST(req: NextRequest) {
         },
       ]
 
-      // If there are overages, extra boxes, or premium fees on top of the base plan price,
-      // add them as a separate line item
       const extras = total - getBasePlanPrice(plan)
       if (extras > 0.01) {
         lineItems.push({
@@ -61,7 +62,6 @@ export async function POST(req: NextRequest) {
       metadata: {
         bookingRef,
         plan,
-        // Store condensed booking info for reference
         name: bookingData.name,
         phone: bookingData.phone,
         pickupDate: bookingData.pickupDate || 'TBD',
@@ -79,7 +79,6 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// Base plan prices at early access rates (must match PLAN_INFO in book/page.tsx)
 function getBasePlanPrice(plan: string): number {
   const prices: Record<string, number> = {
     essentials: 175,
