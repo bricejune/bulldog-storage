@@ -50,7 +50,7 @@ type BookingState = {
 
 const DEFAULT_STATE: BookingState = {
   email: '',
-  step: 0,
+  step: 1,
   agreedToTerms: false,
   plan: null,
   items: { tier1: 0, tier2: 0, tier3: 0 },
@@ -357,7 +357,7 @@ function Counter({
 // ---------------------------------------------------------------------------
 
 export default function BookPage() {
-  const { user } = useAuth()
+  const { user, signup } = useAuth()
   const [state, setState] = useState<BookingState>(DEFAULT_STATE)
   const [tierGuideOpen, setTierGuideOpen] = useState(false)
   const [promoInput, setPromoInput] = useState('')
@@ -365,6 +365,9 @@ export default function BookPage() {
   const [authMounted, setAuthMounted] = useState(false)
   const [checkoutLoading, setCheckoutLoading] = useState(false)
   const [checkoutError, setCheckoutError] = useState('')
+  const [createAccount, setCreateAccount] = useState(false)
+  const [signupPassword, setSignupPassword] = useState('')
+  const [signupError, setSignupError] = useState('')
 
   // Determine per-user storage key
   const storageKey = user ? `bulldog-booking-${user.id}` : 'bulldog-booking'
@@ -376,16 +379,13 @@ export default function BookPage() {
       const saved = localStorage.getItem(storageKey)
       if (saved) {
         const parsed = JSON.parse(saved) as BookingState
-        // If user is logged in and booking is at step 0 (auth gate), skip to step 0 with email pre-filled
-        if (user && parsed.step === 0) {
-          setState({ ...parsed, email: user.email || parsed.email })
-        } else {
-          setState(parsed)
-        }
+        const step = parsed.step === 0 ? 1 : parsed.step
+        setState({ ...parsed, step, email: user ? user.email : parsed.email })
         setPromoInput(parsed.promoCode || '')
       } else if (user) {
-        // No booking yet for this user — start fresh but pre-fill email
-        setState((prev) => ({ ...prev, email: user.email }))
+        setState((prev) => ({ ...prev, step: 1, email: user.email }))
+      } else {
+        setState((prev) => ({ ...prev, step: 1 }))
       }
     } catch {
       // ignore
@@ -1602,6 +1602,64 @@ export default function BookPage() {
                   </div>
                 </div>
               </div>
+
+              {/* Account creation prompt for guests */}
+              {!user && (
+                <div className="rounded-xl border border-gray-200 p-5 mb-6">
+                  {!createAccount ? (
+                    <div className="flex items-center justify-between gap-4">
+                      <div>
+                        <p className="text-sm font-semibold" style={{ color: '#1B2A4A' }}>Save your booking to a dashboard</p>
+                        <p className="text-xs text-gray-400 mt-0.5">Create a free account to track and manage your booking.</p>
+                      </div>
+                      <button
+                        onClick={() => setCreateAccount(true)}
+                        className="flex-shrink-0 px-4 py-2 rounded-lg text-xs font-semibold text-white transition-colors"
+                        style={{ backgroundColor: '#1B2A4A' }}
+                      >
+                        Create account
+                      </button>
+                    </div>
+                  ) : (
+                    <div>
+                      <p className="text-sm font-semibold mb-3" style={{ color: '#1B2A4A' }}>Create your account</p>
+                      <p className="text-xs text-gray-400 mb-3">We&apos;ll use the name and email you entered above.</p>
+                      <input
+                        type="password"
+                        value={signupPassword}
+                        onChange={(e) => { setSignupPassword(e.target.value); setSignupError('') }}
+                        placeholder="Choose a password"
+                        className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 mb-2"
+                      />
+                      {signupError && <p className="text-xs text-red-500 mb-2">{signupError}</p>}
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => {
+                            if (!signupPassword) { setSignupError('Please choose a password.'); return }
+                            const result = signup(state.name, state.email, signupPassword)
+                            if (result.success) {
+                              setCreateAccount(false)
+                              setSignupError('')
+                            } else {
+                              setSignupError(result.error ?? 'Something went wrong.')
+                            }
+                          }}
+                          className="flex-1 py-2.5 rounded-lg text-sm font-semibold text-white transition-colors"
+                          style={{ backgroundColor: '#F5A623' }}
+                        >
+                          Create account
+                        </button>
+                        <button
+                          onClick={() => setCreateAccount(false)}
+                          className="px-4 py-2.5 rounded-lg text-sm text-gray-500 hover:text-gray-700"
+                        >
+                          Skip
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Terms */}
               <label className="flex items-start gap-3 cursor-pointer mb-6">
