@@ -363,6 +363,8 @@ export default function BookPage() {
   const [promoInput, setPromoInput] = useState('')
   const [termsAccepted, setTermsAccepted] = useState(false)
   const [authMounted, setAuthMounted] = useState(false)
+  const [checkoutLoading, setCheckoutLoading] = useState(false)
+  const [checkoutError, setCheckoutError] = useState('')
 
   // Determine per-user storage key
   const storageKey = user ? `bulldog-booking-${user.id}` : 'bulldog-booking'
@@ -426,20 +428,50 @@ export default function BookPage() {
     }
   }
 
-  const handleConfirm = () => {
-    // TODO: Replace with Stripe Checkout. Create session with plan price IDs before showing success.
-    // TODO: Send confirmation email via EmailJS/Resend with booking details.
+  const handleConfirm = async () => {
+    if (!state.plan) return
+    setCheckoutLoading(true)
+    setCheckoutError('')
+
     const ref = `BDS-${Math.floor(10000 + Math.random() * 90000)}`
-    const confirmed = { ...state, bookingRef: ref, confirmed: true }
-    setState(confirmed)
+
+    // Save draft with ref to localStorage so success page can confirm it
     try {
-      // Save under user-specific key if logged in
-      if (user) {
-        localStorage.setItem(`bulldog-booking-${user.id}`, JSON.stringify(confirmed))
-      }
-      localStorage.setItem(storageKey, JSON.stringify(confirmed))
+      const draft = { ...state, bookingRef: ref }
+      localStorage.setItem('bulldog-booking-draft', JSON.stringify(draft))
+      localStorage.setItem(storageKey, JSON.stringify(draft))
     } catch {
       // ignore
+    }
+
+    try {
+      const res = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          plan: state.plan,
+          total: pricing.total,
+          bookingRef: ref,
+          customerEmail: state.email,
+          bookingData: {
+            name: state.name,
+            phone: state.phone,
+            pickupDate: state.pickupDate,
+            returnDate: state.returnDate,
+          },
+        }),
+      })
+
+      const data = await res.json()
+      if (data.url) {
+        window.location.href = data.url
+      } else {
+        setCheckoutError('Something went wrong. Please try again.')
+        setCheckoutLoading(false)
+      }
+    } catch {
+      setCheckoutError('Something went wrong. Please try again.')
+      setCheckoutLoading(false)
     }
   }
 
@@ -1599,15 +1631,18 @@ export default function BookPage() {
               </label>
 
               {/* CTA */}
+              {checkoutError && (
+                <p className="text-sm text-red-500 mb-3 text-center">{checkoutError}</p>
+              )}
               <button
                 onClick={handleConfirm}
-                disabled={!termsAccepted}
+                disabled={!termsAccepted || checkoutLoading}
                 className="w-full py-4 rounded-xl text-white font-bold text-base transition-all shadow-lg disabled:opacity-40 disabled:cursor-not-allowed"
                 style={{ backgroundColor: '#F5A623' }}
-                onMouseEnter={(e) => { if (termsAccepted) e.currentTarget.style.backgroundColor = '#d4891a' }}
+                onMouseEnter={(e) => { if (termsAccepted && !checkoutLoading) e.currentTarget.style.backgroundColor = '#d4891a' }}
                 onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#F5A623')}
               >
-                Secure My Spot — ${pricing.total.toFixed(2)}
+                {checkoutLoading ? 'Redirecting to payment…' : `Secure My Spot — $${pricing.total.toFixed(2)}`}
               </button>
 
               <div className="flex justify-start mt-4">
