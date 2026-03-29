@@ -1433,10 +1433,22 @@ export default function BookPage() {
                       ))}
                     </div>
                   ) : (
-                    <div className="flex gap-4 text-sm text-gray-600">
-                      <span>Tier 1: <strong style={{ color: '#1B2A4A' }}>{state.items.tier1}</strong></span>
-                      <span>Tier 2: <strong style={{ color: '#1B2A4A' }}>{state.items.tier2}</strong></span>
-                      <span>Tier 3: <strong style={{ color: '#1B2A4A' }}>{state.items.tier3}</strong></span>
+                    <div className="flex flex-col gap-1 text-sm text-gray-600">
+                      {state.items.tier1 > 0 && (
+                        <span><strong style={{ color: '#1B2A4A' }}>{state.items.tier1}</strong> small item{state.items.tier1 !== 1 ? 's' : ''} (pillows, bags, gear)</span>
+                      )}
+                      {state.items.tier2 > 0 && (
+                        <span><strong style={{ color: '#1B2A4A' }}>{state.items.tier2}</strong> medium item{state.items.tier2 !== 1 ? 's' : ''} (boxes, mini fridge, fan)</span>
+                      )}
+                      {state.items.tier3 > 0 && (
+                        <span><strong style={{ color: '#1B2A4A' }}>{state.items.tier3}</strong> heavy/furniture item{state.items.tier3 !== 1 ? 's' : ''} (couch, mattress, shelving)</span>
+                      )}
+                      {state.extraBoxes > 0 && (
+                        <span><strong style={{ color: '#1B2A4A' }}>{state.extraBoxes}</strong> extra box{state.extraBoxes !== 1 ? 'es' : ''}</span>
+                      )}
+                      {state.items.tier1 === 0 && state.items.tier2 === 0 && state.items.tier3 === 0 && state.extraBoxes === 0 && (
+                        <span className="italic text-gray-400">No items selected</span>
+                      )}
                     </div>
                   )}
                 </div>
