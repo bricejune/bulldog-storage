@@ -372,6 +372,13 @@ export default function BookPage() {
   // Determine per-user storage key
   const storageKey = user ? `bulldog-booking-${user.id}` : 'bulldog-booking'
 
+  // Don't render until client has loaded from localStorage (prevents hydration blank on Safari)
+  if (!authMounted) return (
+    <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#F8F9FA' }}>
+      <div className="w-8 h-8 rounded-full border-2 border-gray-200 border-t-navy animate-spin" style={{ borderTopColor: '#1B2A4A' }} />
+    </div>
+  )
+
   // Load from localStorage on mount / when user changes
   useEffect(() => {
     setAuthMounted(true)
@@ -466,11 +473,11 @@ export default function BookPage() {
       if (data.url) {
         window.location.href = data.url
       } else {
-        setCheckoutError('Something went wrong. Please try again.')
+        setCheckoutError(data.error || 'Something went wrong. Please try again.')
         setCheckoutLoading(false)
       }
-    } catch {
-      setCheckoutError('Something went wrong. Please try again.')
+    } catch (err) {
+      setCheckoutError(`Network error: ${err instanceof Error ? err.message : 'Please try again.'}`)
       setCheckoutLoading(false)
     }
   }
